@@ -3,3 +3,8 @@
 *.env
 .env.save
 
+.env
+.env.*
+*.env
+.env.save
+
