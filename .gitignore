@@ -8,3 +8,12 @@
 *.env
 .env.save
 
+.env
+.env.*
+*.env
+.env.save
+venv/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
