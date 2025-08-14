@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tibetan Debate Trainer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Title font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --maroon:#7A0019;
+      --maroon-700:#5d0013;
+      --yellow:#FFD34E;
+      --bg:#FFF8EA;
+      --ink:#2a2a2a;
+      --card:#ffffff;
+      --muted:#6b6b6b;
+      --ring: rgba(122,0,25,0.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      color:var(--ink); background:linear-gradient(180deg, var(--bg), #fff);
+      overflow-x:hidden;
+    }
+
+    /* Sidebars with 8 Auspicious Symbols (ornate, traditional styling) */
+    .sidebar{
+      position:fixed; top:0; bottom:0; width:88px;
+      display:flex; align-items:center; justify-content:center;
+      opacity:.38; z-index:1; pointer-events:none; padding:8px 0;
+      background:linear-gradient(180deg, transparent 0%, rgba(255,240,210,.22) 40%, transparent 100%);
+    }
+    .sidebar .inner{height:100%; width:100%; display:grid; grid-template-rows: repeat(8, min-content); align-content:space-evenly; justify-items:center; gap:0}
+    .sidebar svg{width:64px; height:64px; display:block; filter: drop-shadow(0 1px 0 rgba(122,0,25,.15)) drop-shadow(0 0 6px rgba(255,211,78,.25));}
+    .sidebar.left{left:0}
+    .sidebar.right{right:0}
+
+    .app{position:relative; z-index:2; max-width: 1000px; margin: 32px auto; padding: 0 16px 64px;}
+    header{
+      background: var(--maroon); color: #fff; border-radius: 16px;
+      padding: 22px 24px; box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+      display:flex; align-items:center; justify-content:center; gap:12px;
+    }
+    header h1{
+      margin:0; font-size: clamp(26px, 3.6vw, 38px); letter-spacing:.4px;
+      font-family: "Cinzel", serif;
+      text-shadow: 0 1px 0 rgba(0,0,0,.15);
+    }
+
+    .card{
+      background: var(--card); border-radius: 16px; padding: 18px;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08); border:1px solid #f1e7d5; margin-top:16px;
+    }
+    .row{display:grid; grid-template-columns: 1fr 140px 1fr; gap:10px; align-items:center}
+    .row + .row{margin-top:10px}
+    .label{font-weight:700; color:var(--maroon)}
+    .pill{display:inline-block; background: #fef7da; color:#5a3100; border:1px solid #ffe08a;
+      padding:4px 8px; border-radius:999px; font-size:12px; font-weight:700;}
+    .subtle{color:var(--muted); font-size:14px}
+    .hint{font-size:13px; color:#7b6a55}
+    .stack{display:grid; gap:10px}
+    .stack-sm{display:grid; gap:6px}
+    .controls{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+    .legend{font-size:13px; color:#583; margin-top:2px}
+
+    input[type="text"], textarea, select{
+      width:100%; padding:10px 12px; border-radius:10px; border:1px solid #e0d6c4;
+      background:#fff; color:var(--ink); outline:none;
+    }
+    textarea{min-height:70px; resize:vertical}
+    select:focus, input[type="text"]:focus, textarea:focus{
+      border-color: var(--yellow); box-shadow:0 0 0 4px var(--ring);
+    }
+
+    .btn{
+      appearance:none; border:none; border-radius:999px; padding:10px 16px; font-weight:700;
+      cursor:pointer; transition:.15s transform ease, .15s filter ease;
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:var(--maroon); color:#fff}
+    .btn-primary:hover{filter:brightness(1.05)}
+    .btn-secondary{background:var(--yellow); color:#3a1d00}
+    .btn-ghost{background:#fff2; color:var(--maroon); border:1px solid #efdfc6}
+    .toolbar{
+      position:sticky; bottom:0; z-index:5; margin-top:20px;
+      background:rgba(255,255,255,0.9); backdrop-filter: blur(6px);
+      border:1px solid #efdfc6; padding:10px; border-radius:12px;
+      display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+    }
+    .role{font-weight:700; color:var(--maroon); margin-bottom:8px;}
+    .divider{height:1px; background:#f0e4cf; margin:10px 0}
+    .venn{border:1px dashed #e6d7bd; border-radius:12px; padding:10px; background:#fffaf0}
+    .small{font-size:12px; color:#775;}
+    .center{text-align:center}
+    .select-inline{max-width: 420px}
+  </style>
+</head>
+<body>
+
+  <!-- Left sidebar: Eight Auspicious Symbols (ornate) -->
+  <aside class="sidebar left" aria-hidden="true">
+    <div class="inner ausp">
+      <!-- 1) Parasol (Chatra) with triple-jewel finial and ribbons -->
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFEAA6"/>
+            <stop offset="1" stop-color="#FFD34E"/>
+          </linearGradient>
+        </defs>
+        <path d="M10 24 Q32 9 54 24 C51 26,13 26,10 24 Z" fill="url(#pg)" stroke="var(--maroon)" stroke-width="2"/>
+        <path d="M12 24 q3 4 6 0 q3 4 6 0 q3 4 6 0 q3 4 6 0 q3 4 6 0 q3 4 6 0" fill="none" stroke="var(--maroon)" stroke-width="1.3"/>
+        <circle cx="32" cy="10" r="2.3" fill="var(--maroon)"/>
+        <circle cx="32" cy="14.2" r="2" fill="#FDE39A" stroke="var(--maroon)" stroke-width="1"/>
+        <circle cx="32" cy="18" r="1.7" fill="#FAD064" stroke="var(--maroon)" stroke-width="0.9"/>
+        <line x1="32" y1="24" x2="32" y2="50" stroke="var(--maroon)" stroke-width="2.4"/>
+        <path d="M16 25 q2 8 -4 14" fill="none" stroke="var(--maroon)" stroke-width="1.4"/>
+        <path d="M48 25 q-2 8 4 14" fill="none" stroke="var(--maroon)" stroke-width="1.4"/>
+      </svg>
+
+      <!-- 2) Golden Fish (Matsya) with scale hints and binding ribbon -->
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFEBAE"/>
+            <stop offset="1" stop-color="#FFC94B"/>
+          </linearGradient>
+        </defs>
+        <g>
+          <path d="M18 32 c-4 -8 8 -14 17 -12 c-4 3 -4 5 0 8 c-8 2 -17 2 -17 4 z" fill="url(#fg)" stroke="var(--maroon)" stroke-width="1.8"/>
+          <path d="M15 30 l-5 -3 l4 7 z" fill="url(#fg)" stroke="var(--maroon)" stroke-width="1.2"/>
+          <circle cx="25" cy="27.5" r="1.2" fill="var(--maroon)"/>
+          <path d="M20 30 q2 -2 4 0 M22 32 q2 -2 4 0" fill="none" stroke="var(--maroon)" stroke-width="0.9"/>
+        </g>
+        <g transform="translate(64,0) scale(-1,1)">
+          <path d="M18 32 c-4 -8 8 -14 17 -12 c-4 3 -4 5 0 8 c-8 2 -17 2 -17 4 z" fill="url(#fg)" stroke="var(--maroon)" stroke-width="1.8"/>
+          <path d="M15 30 l-5 -3 l4 7 z" fill="url(#fg)" stroke="var(--maroon)" stroke-width="1.2"/>
+          <circle cx="25" cy="27.5" r="1.2" fill="var(--maroon)"/>
+          <path d="M20 30 q2 -2 4 0 M22 32 q2 -2 4 0" fill="none" stroke="var(--maroon)" stroke-width="0.9"/>
+        </g>
+        <path d="M31 38 q1 5 -3 8 M33 38 q-1 5 3 8" fill="none" stroke="var(--maroon)" stroke-width="1.2"/>
+      </svg>
+
+      <!-- 3) Treasure Vase (Kalasha) with cloud-scrolls -->
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="vg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFEAA0"/>
+            <stop offset="1" stop-color="#FFC64A"/>
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke="var(--maroon)" stroke-width="1.3">
+          <path d="M10 36 q6 -8 14 -3 q-4 1 -4 4 q0 3 4 4"/>
+          <path d="M54 36 q-6 -8 -14 -3 q4 1 4 4 q0 3 -4 4"/>
+        </g>
+        <path d="M18 38 c0 9 7 16 14 16 s14 -7 14 -16 c0 -6 -5 -9 -14 -9 s-14 3 -14 9 z" fill="url(#vg)" stroke="var(--maroon)" stroke-width="2"/>
+        <path d="M24 22 h16 v6 c0 3 -3 6 -8 6 s-8 -3 -8 -6 z" fill="url(#vg)" stroke="var(--maroon)" stroke-width="2"/>
+        <circle cx="32" cy="16" r="2.2" fill="#FDE39A" stroke="var(--maroon)" stroke-width="1.1"/>
+        <circle cx="32" cy="12" r="1.8" fill="#F9CD67" stroke="var(--maroon)" stroke-width="1"/>
+        <circle cx="32" cy="9" r="1.4" fill="#EFB950" stroke="var(--maroon)" stroke-width="0.9"/>
+      </svg>
+
+      <!-- 4) Lotus (Padma) with layered petals -->
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFF2BE"/>
+            <stop offset="1" stop-color="#FFD34E"/>
+          </linearGradient>
+        </defs>
+        <path d="M32 44 c-14 0 -16 -8 -16 -12 c6 0 10 3 16 -5 c6 8 10 5 16 5 c0 4 -2 12 -16 12 z" fill="url(#lg)" stroke="var(--maroon)" stroke-width="2"/>
+        <path d="M32 26 c-3 -3 -5 -6 -5 -8 c3 0 5 3 5 4 c0 -1 2 -4 5 -4 c0 2 -2 5 -5 8 z" fill="#F2C05A" stroke="var(--maroon)" stroke-width="1.3"/>
+        <g fill="#EFB950" stroke="var(--maroon)" stroke-width=".6"><circle cx="28" cy="34" r="1"/><circle cx="32" cy="34" r="1"/><circle cx="36" cy="34" r="1"/></g>
+      </svg>
+
+      <!-- 5) Conch (Shankha) with cloud swirls -->
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="cg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#FFF5CC"/>
+            <stop offset="1" stop-color="#FFD34E"/>
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke="var(--maroon)" stroke-width="1.2" opacity=".9">
+          <path d="M14 30 q6 -6 12 0 q-5 1 -5 4 q0 3 5 4"/>
+          <path d="M50 30 q-6 -6 -12 0 q5 1 5 4 q0 3 -5 4"/>
+        </g>
+        <path d="M40 32 c-8 -12 -22 -9 -24 2 c3 10 18 15 24 -2 z" fill="url(#cg)" stroke="var(--maroon)" stroke-width="2"/>
+        <path d="M36 30 q8 2 9 9 q-6 2 -10 -3" fill="none" stroke="var(--maroon)" stroke-width="1.5"/>
+        <path d="M22 30 q5 3 7 6 M20 34 q4 2 6 4" fill="none" stroke="var(--maroon)" stroke-width="1.1"/>
+      </svg>
+
+      <!-- 6) Endless Knot (Shrivatsa) with rope interlacing -->
+      <svg viewBox="0 0 64 64">
+        <path d="M20 16 H32 L44 28 L32 40 L20 28 Z
+                 M32 28 L44 16 H56 L44 28 L56 40 H44 L32 28
+                 M20 40 L32 52 H44 L32 40 L20 52 H8 Z"
+              fill="none" stroke="var(--maroon)" stroke-width="3.2" stroke-linejoin="round"/>
+        <path d="M20 16 H32 L44 28" fill="none" stroke="#F5C05A" stroke-opacity=".55" stroke-width="1.2"/>
+        <path d="M56 40 H44 L32 28" fill="none" stroke="#F5C05A" stroke-opacity=".55" stroke-width="1.2"/>
+        <g stroke="#fff" stroke-width="3.2" opacity=".85">
+          <line x1="32" y1="28" x2="44" y2="16"/>
+          <line x1="32" y1="28" x2="20" y2="40"/>
+        </g>
+        <g stroke="var(--maroon)" stroke-width="3.2" stroke-linejoin="round">
+          <line x1="20" y1="28" x2="32" y2="40"/>
+        </g>
+      </svg>
+
+      <!-- 7) Victory Banner (Dhvaja) -->
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFEAA6"/>
+            <stop offset="1" stop-color="#FFC94B"/>
+          </linearGradient>
+        </defs>
+        <line x1="18" y1="10" x2="18" y2="54" stroke="var(--maroon)" stroke-width="2.6"/>
+        <circle cx="18" cy="10" r="2.2" fill="var(--maroon)"/>
+        <path d="M18 12 h24 l-8 8 l8 8 h-24 z" fill="url(#bg)" stroke="var(--maroon)" stroke-width="1.8"/>
+        <path d="M42 19 q8 4 0 8" fill="none" stroke="var(--maroon)" stroke-width="1.3"/>
+        <path d="M42 23 q6 4 0 7" fill="none" stroke="var(--maroon)" stroke-width="1.1"/>
+        <circle cx="18" cy="54" r="2.2" fill="var(--maroon)"/>
+      </svg>
+
+      <!-- 8) Dharma Wheel (Dharmachakra) -->
+      <svg viewBox="0 0 64 64">
+        <defs>
+          <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFEAA6"/>
+            <stop offset="1" stop-color="#FFC94B"/>
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="14" fill="none" stroke="var(--maroon)" stroke-width="2.6"/>
+        <circle cx="32" cy="32" r="5" fill="url(#wg)" stroke="var(--maroon)" stroke-width="1.5"/>
+        <g stroke="var(--maroon)" stroke-width="1.8">
+          <line x1="32" y1="14" x2="32" y2="22"/>
+          <line x1="32" y1="42" x2="32" y2="50"/>
+          <line x1="14" y1="32" x2="22" y2="32"/>
+          <line x1="42" y1="32" x2="50" y2="32"/>
+          <line x1="19" y1="19" x2="24" y2="24"/>
+          <line x1="40" y1="40" x2="45" y2="45"/>
+          <line x1="45" y1="19" x2="40" y2="24"/>
+          <line x1="24" y1="40" x2="19" y2="45"/>
+        </g>
+        <g fill="url(#wg)" stroke="var(--maroon)" stroke-width=".9">
+          <circle cx="32" cy="14" r="1.6"/>
+          <circle cx="32" cy="50" r="1.6"/>
+          <circle cx="14" cy="32" r="1.6"/>
+          <circle cx="50" cy="32" r="1.6"/>
+        </g>
+      </svg>
+    </div>
+  </aside>
+
+  <!-- Right sidebar: mirrored set for balance (reuse same drawings) -->
+  <aside class="sidebar right" aria-hidden="true">
+    <div class="inner ausp">
+      <!-- Duplicate the same eight icons for perfect symmetry and even spacing -->
+      <!-- Parasol -->
+      <svg viewBox="0 0 64 64">
+        <defs><linearGradient id="pgR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFEAA6"/><stop offset="1" stop-color="#FFD34E"/></linearGradient></defs>
+        <path d="M10 24 Q32 9 54 24 C51 26,13 26,10 24 Z" fill="url(#pgR)" stroke="var(--maroon)" stroke-width="2"/>
+        <path d="M12 24 q3 4 6 0 q3 4 6 0 q3 4 6 0 q3 4 6 0 q3 4 6 0 q3 4 6 0" fill="none" stroke="var(--maroon)" stroke-width="1.3"/>
+        <circle cx="32" cy="10" r="2.3" fill="var(--maroon)"/>
+        <circle cx="32" cy="14.2" r="2" fill="#FDE39A" stroke="var(--maroon)" stroke-width="1"/>
+        <circle cx="32" cy="18" r="1.7" fill="#FAD064" stroke="var(--maroon)" stroke-width="0.9"/>
+        <line x1="32" y1="24" x2="32" y2="50" stroke="var(--maroon)" stroke-width="2.4"/>
+        <path d="M16 25 q2 8 -4 14" fill="none" stroke="var(--maroon)" stroke-width="1.4"/>
+        <path d="M48 25 q-2 8 4 14" fill="none" stroke="var(--maroon)" stroke-width="1.4"/>
+      </svg>
+      <!-- Fish -->
+      <svg viewBox="0 0 64 64">
+        <defs><linearGradient id="fgR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFEBAE"/><stop offset="1" stop-color="#FFC94B"/></linearGradient></defs>
+        <g>
+          <path d="M18 32 c-4 -8 8 -14 17 -12 c-4 3 -4 5 0 8 c-8 2 -17 2 -17 4 z" fill="url(#fgR)" stroke="var(--maroon)" stroke-width="1.8"/>
+          <path d="M15 30 l-5 -3 l4 7 z" fill="url(#fgR)" stroke="var(--maroon)" stroke-width="1.2"/>
+          <circle cx="25" cy="27.5" r="1.2" fill="var(--maroon)"/>
+          <path d="M20 30 q2 -2 4 0 M22 32 q2 -2 4 0" fill="none" stroke="var(--maroon)" stroke-width="0.9"/>
+        </g>
+        <g transform="translate(64,0) scale(-1,1)">
+          <path d="M18 32 c-4 -8 8 -14 17 -12 c-4 3 -4 5 0 8 c-8 2 -17 2 -17 4 z" fill="url(#fgR)" stroke="var(--maroon)" stroke-width="1.8"/>
+          <path d="M15 30 l-5 -3 l4 7 z" fill="url(#fgR)" stroke="var(--maroon)" stroke-width="1.2"/>
+          <circle cx="25" cy="27.5" r="1.2" fill="var(--maroon)"/>
+          <path d="M20 30 q2 -2 4 0 M22 32 q2 -2 4 0" fill="none" stroke="var(--maroon)" stroke-width="0.9"/>
+        </g>
+        <path d="M31 38 q1 5 -3 8 M33 38 q-1 5 3 8" fill="none" stroke="var(--maroon)" stroke-width="1.2"/>
+      </svg>
+      <!-- Vase -->
+      <svg viewBox="0 0 64 64">
+        <defs><linearGradient id="vgR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFEAA0"/><stop offset="1" stop-color="#FFC64A"/></linearGradient></defs>
+        <g fill="none" stroke="var(--maroon)" stroke-width="1.3">
+          <path d="M10 36 q6 -8 14 -3 q-4 1 -4 4 q0 3 4 4"/>
+          <path d="M54 36 q-6 -8 -14 -3 q4 1 4 4 q0 3 -4 4"/>
+        </g>
+        <path d="M18 38 c0 9 7 16 14 16 s14 -7 14 -16 c0 -6 -5 -9 -14 -9 s-14 3 -14 9 z" fill="url(#vgR)" stroke="var(--maroon)" stroke-width="2"/>
+        <path d="M24 22 h16 v6 c0 3 -3 6 -8 6 s-8 -3 -8 -6 z" fill="url(#vgR)" stroke="var(--maroon)" stroke-width="2"/>
+        <circle cx="32" cy="16" r="2.2" fill="#FDE39A" stroke="var(--maroon)" stroke-width="1.1"/>
+        <circle cx="32" cy="12" r="1.8" fill="#F9CD67" stroke="var(--maroon)" stroke-width="1"/>
+        <circle cx="32" cy="9" r="1.4" fill="#EFB950" stroke="var(--maroon)" stroke-width="0.9"/>
+      </svg>
+      <!-- Lotus -->
+      <svg viewBox="0 0 64 64">
+        <defs><linearGradient id="lgR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF2BE"/><stop offset="1" stop-color="#FFD34E"/></linearGradient></defs>
+        <path d="M32 44 c-14 0 -16 -8 -16 -12 c6 0 10 3 16 -5 c6 8 10 5 16 5 c0 4 -2 12 -16 12 z" fill="url(#lgR)" stroke="var(--maroon)" stroke-width="2"/>
+        <path d="M32 26 c-3 -3 -5 -6 -5 -8 c3 0 5 3 5 4 c0 -1 2 -4 5 -4 c0 2 -2 5 -5 8 z" fill="#F2C05A" stroke="var(--maroon)" stroke-width="1.3"/>
+        <g fill="#EFB950" stroke="var(--maroon)" stroke-width=".6"><circle cx="28" cy="34" r="1"/><circle cx="32" cy="34" r="1"/><circle cx="36" cy="34" r="1"/></g>
+      </svg>
+      <!-- Conch -->
+      <svg viewBox="0 0 64 64">
+        <defs><linearGradient id="cgR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF5CC"/><stop offset="1" stop-color="#FFD34E"/></linearGradient></defs>
+        <g fill="none" stroke="var(--maroon)" stroke-width="1.2" opacity=".9">
+          <path d="M14 30 q6 -6 12 0 q-5 1 -5 4 q0 3 5 4"/>
+          <path d="M50 30 q-6 -6 -12 0 q5 1 5 4 q0 3 -5 4"/>
+        </g>
+        <path d="M40 32 c-8 -12 -22 -9 -24 2 c3 10 18 15 24 -2 z" fill="url(#cgR)" stroke="var(--maroon)" stroke-width="2"/>
+        <path d="M36 30 q8 2 9 9 q-6 2 -10 -3" fill="none" stroke="var(--maroon)" stroke-width="1.5"/>
+        <path d="M22 30 q5 3 7 6 M20 34 q4 2 6 4" fill="none" stroke="var(--maroon)" stroke-width="1.1"/>
+      </svg>
+      <!-- Endless Knot -->
+      <svg viewBox="0 0 64 64">
+        <path d="M20 16 H32 L44 28 L32 40 L20 28 Z
+                 M32 28 L44 16 H56 L44 28 L56 40 H44 L32 28
+                 M20 40 L32 52 H44 L32 40 L20 52 H8 Z"
+              fill="none" stroke="var(--maroon)" stroke-width="3.2" stroke-linejoin="round"/>
+        <path d="M20 16 H32 L44 28" fill="none" stroke="#F5C05A" stroke-opacity=".55" stroke-width="1.2"/>
+        <path d="M56 40 H44 L32 28" fill="none" stroke="#F5C05A" stroke-opacity=".55" stroke-width="1.2"/>
+        <g stroke="#fff" stroke-width="3.2" opacity=".85">
+          <line x1="32" y1="28" x2="44" y2="16"/>
+          <line x1="32" y1="28" x2="20" y2="40"/>
+        </g>
+        <g stroke="var(--maroon)" stroke-width="3.2" stroke-linejoin="round">
+          <line x1="20" y1="28" x2="32" y2="40"/>
+        </g>
+      </svg>
+      <!-- Victory Banner -->
+      <svg viewBox="0 0 64 64">
+        <defs><linearGradient id="bgR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFEAA6"/><stop offset="1" stop-color="#FFC94B"/></linearGradient></defs>
+        <line x1="18" y1="10" x2="18" y2="54" stroke="var(--maroon)" stroke-width="2.6"/>
+        <circle cx="18" cy="10" r="2.2" fill="var(--maroon)"/>
+        <path d="M18 12 h24 l-8 8 l8 8 h-24 z" fill="url(#bgR)" stroke="var(--maroon)" stroke-width="1.8"/>
+        <path d="M42 19 q8 4 0 8" fill="none" stroke="var(--maroon)" stroke-width="1.3"/>
+        <path d="M42 23 q6 4 0 7" fill="none" stroke="var(--maroon)" stroke-width="1.1"/>
+        <circle cx="18" cy="54" r="2.2" fill="var(--maroon)"/>
+      </svg>
+      <!-- Dharma Wheel -->
+      <svg viewBox="0 0 64 64">
+        <defs><linearGradient id="wgR" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFEAA6"/><stop offset="1" stop-color="#FFC94B"/></linearGradient></defs>
+        <circle cx="32" cy="32" r="14" fill="none" stroke="var(--maroon)" stroke-width="2.6"/>
+        <circle cx="32" cy="32" r="5" fill="url(#wgR)" stroke="var(--maroon)" stroke-width="1.5"/>
+        <g stroke="var(--maroon)" stroke-width="1.8">
+          <line x1="32" y1="14" x2="32" y2="22"/>
+          <line x1="32" y1="42" x2="32" y2="50"/>
+          <line x1="14" y1="32" x2="22" y2="32"/>
+          <line x1="42" y1="32" x2="50" y2="32"/>
+          <line x1="19" y1="19" x2="24" y2="24"/>
+          <line x1="40" y1="40" x2="45" y2="45"/>
+          <line x1="45" y1="19" x2="40" y2="24"/>
+          <line x1="24" y1="40" x2="19" y2="45"/>
+        </g>
+        <g fill="url(#wgR)" stroke="var(--maroon)" stroke-width=".9">
+          <circle cx="32" cy="14" r="1.6"/>
+          <circle cx="32" cy="50" r="1.6"/>
+          <circle cx="14" cy="32" r="1.6"/>
+          <circle cx="50" cy="32" r="1.6"/>
+        </g>
+      </svg>
+    </div>
+  </aside>
+
+  <div class="app">
+    <header>
+      <h1>Tibetan Debate Trainer</h1>
+    </header>
+
+    <form method="post" class="stack" autocomplete="off">
+      <input type="hidden" name="step_count" value="{{ step_count }}">
+      <input type="hidden" name="flipped" value="{{ flipped }}">
+
+      {% set def_lab = "Player 2 (Defender)" if flipped=="0" else "Player 1 (Defender)" %}
+      {% set cha_lab = "Player 1 (Challenger)" if flipped=="0" else "Player 2 (Challenger)" %}
+
+      {% for step in steps %}
+        {% if step.challenger_choice and not step.challenger_options %}
+          <input type="hidden" name="challenger_choice_{{ loop.index0 }}" value="{{ step.challenger_choice }}">
+        {% endif %}
+
+        <div class="card">
+          {% if not step.subject and not step.predicate and not step.reason %}
+            <div class="role">{{ cha_lab }}:</div>
+          {% endif %}
+
+          <div class="label subtle">Consequence</div>
+
+          <div class="row">
+            <div>It follows that</div>
+            <div></div>
+            <div></div>
+          </div>
+
+          <div class="row">
+            <input type="text" name="subject_{{ loop.index0 }}" value="{{ step.subject }}" placeholder="subject (e.g., sound)" />
+            <select name="copula_{{ loop.index0 }}">
+              <option value="is"  {% if step.copula == 'is'  %}selected{% endif %}>is</option>
+              <option value="are" {% if step.copula == 'are' %}selected{% endif %}>are</option>
+            </select>
+            <input type="text" name="predicate_{{ loop.index0 }}" value="{{ step.predicate }}" placeholder="predicate (e.g., impermanent)" />
+          </div>
+
+          {% if not step.subject and not step.predicate and not step.reason %}
+            <div class="row">
+              <div></div>
+              <div class="subtle center">because of being</div>
+              <input type="text" name="reason_{{ loop.index0 }}" value="{{ step.reason }}" placeholder="reason (leave blank for an initial claim)" />
+            </div>
+          {% else %}
+            <div class="row">
+              <div></div><div></div>
+              <input type="text" name="reason_{{ loop.index0 }}" value="{{ step.reason }}" placeholder="reason" />
+            </div>
+          {% endif %}
+
+          {% if step.consequence %}
+            <div class="legend">Preview: <span class="pill">{{ step.consequence }}</span></div>
+          {% endif %}
+
+          <div class="divider"></div>
+
+          {% if step.defender_explanations %}
+            <div class="stack-sm">
+              <div class="label">{{ def_lab }}:</div>
+              <select class="select-inline" name="defender_choice_{{ loop.index0 }}">
+                <option value="">-- choose --</option>
+                {% for label,ex in step.defender_explanations %}
+                  <option value="{{ label }}" {% if step.defender_choice == label %}selected{% endif %}>
+                    {{ label }}{% if ex %}  {{ ex }}{% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+              {% if step.defender_choice %}
+                <div class="hint">{{ step.defender_choice }}</div>
+              {% endif %}
+            </div>
+            <div class="divider"></div>
+          {% endif %}
+
+          {% if step.need_reason == '1' %}
+            <div class="stack-sm">
+              <div class="label">{{ cha_lab }} — Complete the reasoning:</div>
+              <input type="text" name="challenger_reason_{{ loop.index0 }}" value="{{ step.challenger_reason }}" placeholder="because of being …" />
+              <div class="small">After you submit, the full consequence becomes visible and {{ def_lab }} will get the usual options.</div>
+            </div>
+            <div class="divider"></div>
+          {% endif %}
+
+          {% if step.need_improper_ack == '1' %}
+            <div class="stack-sm">
+              <div class="label">{{ cha_lab }} — {{ IMPROPER_Q }}</div>
+              <select class="select-inline" name="improper_ack_{{ loop.index0 }}">
+                <option value="">-- choose --</option>
+                <option value="{{ YES_OPT }}" {% if step.improper_ack == YES_OPT %}selected{% endif %}>{{ YES_OPT }}</option>
+                <option value="{{ NO_OPT }}"  {% if step.improper_ack == NO_OPT  %}selected{% endif %}>{{ NO_OPT }}</option>
+              </select>
+              <div class="small">Regardless of your choice, the next screen will prompt a new consequence.</div>
+            </div>
+            <div class="divider"></div>
+          {% endif %}
+
+          {% if step.challenger_options and step.need_reason != '1' and step.need_improper_ack != '1' %}
+            <div class="stack-sm">
+              <div class="label">{{ cha_lab }}:</div>
+              <select class="select-inline" name="challenger_choice_{{ loop.index0 }}">
+                <option value="">-- choose --</option>
+                {% for opt in step.challenger_options %}
+                  <option value="{{ opt }}" {% if step.challenger_choice == opt %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+              </select>
+
+              {% if step.challenger_choice and step.challenger_choice not in ['Ask a question','Compare phenomena','Tsar! [You contradicted yourself!]'] %}
+                <div>Complete the reasoning:</div>
+                <input type="text" name="challenger_reason_{{ loop.index0 }}" value="{{ step.challenger_reason }}" placeholder="because of being …" />
+              {% endif %}
+            </div>
+            <div class="divider"></div>
+          {% endif %}
+
+          {% if step.challenger_choice == 'Ask a question' %}
+            <div class="stack-sm">
+              <div class="label">{{ cha_lab }} — Question:</div>
+              <textarea name="question_text_{{ loop.index0 }}" placeholder="Type your question…">{{ step.question_text }}</textarea>
+              {% if step.question_text %}
+                <div class="label">{{ def_lab }} — Answer:</div>
+                <textarea name="answer_text_{{ loop.index0 }}" placeholder="Type your answer…">{{ step.answer_text }}</textarea>
+                <div class="small">Submitting with an answer will advance to a fresh consequence.</div>
+              {% endif %}
+            </div>
+            <div class="divider"></div>
+          {% endif %}
+
+          {% if step.challenger_choice == 'Compare phenomena' and (not step.compare_a or not step.compare_b) %}
+            <div class="stack-sm">
+              <div class="label">{{ cha_lab }} — Compare</div>
+              <div class="subtle">What is the relationship between</div>
+              <div class="row">
+                <input type="text" name="compare_a_{{ loop.index0 }}" value="{{ step.compare_a }}" placeholder="term A (e.g., sound)" />
+                <div class="center">and</div>
+                <input type="text" name="compare_b_{{ loop.index0 }}" value="{{ step.compare_b }}" placeholder="term B (e.g., impermanent phenomenon)" />
+              </div>
+            </div>
+            <div class="divider"></div>
+          {% endif %}
+
+          {% if step.challenger_choice == 'Compare phenomena' and step.compare_a and step.compare_b %}
+            <div class="stack-sm">
+              <div class="label">{{ def_lab }} — Choose diagram:</div>
+              <select class="select-inline"
+                      id="compare-select-{{ loop.index0 }}"
+                      name="compare_option_{{ loop.index0 }}"
+                      {% if step.compare_locked == '1' %}disabled{% endif %}>
+                <option value="">-- preview options --</option>
+                {% for opt in ['Mutually inclusive','Mutually exclusive','3 possibilities (down)','3 possibilities (up)','4 possibilities'] %}
+                  <option value="{{ opt }}" {% if step.compare_option == opt %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+              </select>
+
+              <!-- Persist A/B (and selected option when locked) across submissions -->
+              <input type="hidden" name="compare_a_{{ loop.index0 }}" value="{{ step.compare_a }}">
+              <input type="hidden" name="compare_b_{{ loop.index0 }}" value="{{ step.compare_b }}">
+              {% if step.compare_locked == '1' %}
+                <input type="hidden" name="compare_option_{{ loop.index0 }}" value="{{ step.compare_option }}">
+              {% endif %}
+
+              <div class="venn">
+                <div class="subtle">Venn diagram preview</div>
+                <div id="venn-{{ loop.index0 }}"></div>
+                <input type="hidden" name="compare_locked_{{ loop.index0 }}" value="{{ step.compare_locked }}">
+              </div>
+
+              <script>
+                (function(){
+                  const sel = document.getElementById('compare-select-{{ loop.index0 }}');
+                  const box = document.getElementById('venn-{{ loop.index0 }}');
+                  const A = {{ step.compare_a|tojson }};
+                  const B = {{ step.compare_b|tojson }};
+
+                  function svgWrap(inner){
+                    return `<svg width="520" height="320" viewBox="0 0 520 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Venn diagram">
+                      <rect x="1" y="1" width="518" height="318" rx="16" fill="#fff" stroke="#e7d9bd"/>
+                      ${inner}
+                    </svg>`;
+                  }
+                  function label(x, y, text, anchor='middle'){
+                    return `<text x="${x}" y="${y}" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="15" fill="#333" text-anchor="${anchor}">${text}</text>`;
+                  }
+
+                  function render(opt){
+                    let svg="";
+                    switch(opt){
+                      case "Mutually inclusive": {
+                        const cx=260, cy=160, r=110;
+                        svg = svgWrap(`
+                          <circle cx="${cx}" cy="${cy}" r="${r}" fill="#FCE9B3" stroke="#E7C56A"/>
+                          ${label(cx, cy-85, A + " = " + B)}
+                          ${label(cx, 300, "All and only the same members")}
+                        `);
+                        break;
+                      }
+                      case "Mutually exclusive": {
+                        const r=95, cy=165, leftX=170, rightX=350, gap=12;
+                        svg = svgWrap(`
+                          <circle cx="${leftX}" cy="${cy}" r="${r}" fill="#FFE2A0" stroke="#E7C56A" />
+                          <circle cx="${rightX+gap}" cy="${cy}" r="${r}" fill="#F6A9A6" stroke="#E7A4A0" />
+                          ${label(leftX, cy, A)}
+                          ${label(rightX+gap, cy, B)}
+                          ${label(260, 300, "No overlap")}
+                        `);
+                        break;
+                      }
+                      case "3 possibilities (down)": {
+                        const cx=260, cy=165, R=120, r=72;
+                        svg = svgWrap(`
+                          <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#E7A4A0" stroke-width="2" />
+                          <circle cx="${cx}" cy="${cy}" r="${r}" fill="#FFE2A0" stroke="#E7C56A" />
+                          ${label(cx, cy-90, B)}
+                          ${label(cx, cy, A)}
+                          ${label(260, 300, A + " ⊂ " + B)}
+                        `);
+                        break;
+                      }
+                      case "3 possibilities (up)": {
+                        const cx=260, cy=165, R=120, r=72;
+                        svg = svgWrap(`
+                          <circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#E7C56A" stroke-width="2" />
+                          <circle cx="${cx}" cy="${cy}" r="${r}" fill="#F6A9A6" stroke="#E7A4A0" />
+                          ${label(cx, cy-90, A)}
+                          ${label(cx, cy, B)}
+                          ${label(260, 300, B + " ⊂ " + A)}
+                        `);
+                        break;
+                      }
+                      case "4 possibilities": {
+                        const cy=165, r=95, leftX=220, rightX=300;
+                        const leftFill  = "#FFE2A0";
+                        const rightFill = "#F6A9A6";
+                        const overlap   = "#EFCF95";
+                        svg = svgWrap(`
+                          <defs>
+                            <clipPath id="left-{{ loop.index0 }}"><circle cx="${leftX}" cy="${cy}" r="${r}"/></clipPath>
+                            <clipPath id="right-{{ loop.index0 }}"><circle cx="${rightX}" cy="${cy}" r="${r}"/></clipPath>
+                          </defs>
+                          <circle cx="${leftX}"  cy="${cy}" r="${r}" fill="${leftFill}"  stroke="#E7C56A" />
+                          <circle cx="${rightX}" cy="${cy}" r="${r}" fill="${rightFill}" stroke="#E7A4A0" />
+                          <g clip-path="url(#left-{{ loop.index0 }})">
+                            <circle cx="${rightX}" cy="${cy}" r="${r}" fill="${overlap}"/>
+                          </g>
+                          ${label(leftX - 48, cy, A, 'middle')}
+                          ${label(rightX + 48, cy, B, 'middle')}
+                          ${label(260, 300, "Partial overlap")}
+                        `);
+                        break;
+                      }
+                      default:
+                        svg = svgWrap(`<text x="260" y="170" font-size="14" fill="#7b6a55" text-anchor="middle">Pick an option to preview…</text>`);
+                    }
+                    box.innerHTML = svg;
+                  }
+
+                  if (sel){
+                    sel.addEventListener('change', e => {
+                      render(e.target.value); // preview freely; lock-in happens on Submit
+                    });
+                    render(sel.value); // initial preview or persisted preview if locked
+                  }
+                })();
+              </script>
+            </div>
+            <div class="divider"></div>
+          {% endif %}
+
+          {% if step.contradiction_options %}
+            <div class="stack-sm">
+              <div class="label">{{ def_lab }}:</div>
+              <select class="select-inline" name="contradiction_choice_{{ loop.index0 }}">
+                <option value="">-- choose --</option>
+                {% for opt in step.contradiction_options %}
+                  <option value="{{ opt }}" {% if step.contradiction_choice == opt %}selected{% endif %}>{{ opt }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <div class="toolbar">
+        <div class="controls">
+          <button class="btn btn-primary" type="submit" name="submit_continue">Submit / Continue</button>
+          <button class="btn btn-ghost" type="submit" name="switch_roles">Switch roles</button>
+        </div>
+        <div class="controls">
+          <button class="btn btn-secondary" type="submit" name="quick_choice" value="{{ ASK_OPTION }}">Ask a question</button>
+          <button class="btn btn-secondary" type="submit" name="quick_choice" value="{{ COMPARE_OPTION }}">Compare phenomena</button>
+          <button class="btn btn-ghost" type="submit" name="generate_transcript">Generate Transcript</button>
+        </div>
+      </div>
+
+      {% if transcript %}
+        <div class="card">
+          <div class="label">Transcript</div>
+          <pre style="white-space:pre-wrap; margin:0">{{ transcript }}</pre>
+        </div>
+      {% endif %}
+    </form>
+  </div>
+</body>
+</html>
